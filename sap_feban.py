@@ -3,6 +3,7 @@ from win32com.client import dynamic
 import time
 import os
 from datetime import datetime
+from collections import defaultdict
 
 SapGuiAuto = win32com.client.GetObject("SAPGUI")
 application = dynamic.Dispatch(SapGuiAuto.GetScriptingEngine)
@@ -87,6 +88,41 @@ try:
     wb.Save()
 except Exception as e:
     print(f"  (Formatowanie kolumny pominiete: {e})")
+
+# Szukaj par +/- w kolumnie KWBTR i koloruj wiersze na jasnozielono
+if kwbtr_idx is not None:
+    print("Szukam par +/- w kolumnie KWBTR...")
+
+    positives = defaultdict(list)   # kwota -> lista excel_row
+    negatives = defaultdict(list)
+
+    for row in range(row_count):
+        excel_row = row + 2
+        val = ws.Cells(excel_row, kwbtr_idx + 1).Value
+        if val is None:
+            continue
+        try:
+            amt = round(float(val), 2)
+        except:
+            continue
+        if amt > 0:
+            positives[amt].append(excel_row)
+        elif amt < 0:
+            negatives[round(abs(amt), 2)].append(excel_row)
+
+    matched = set(positives.keys()) & set(negatives.keys())
+    LIGHT_GREEN = 144 + 238 * 256 + 144 * 65536  # RGB(144, 238, 144)
+
+    rows_to_color = []
+    for amt in matched:
+        rows_to_color.extend(positives[amt])
+        rows_to_color.extend(negatives[amt])
+
+    for excel_row in rows_to_color:
+        ws.Rows(excel_row).Interior.Color = LIGHT_GREEN
+
+    wb.Save()
+    print(f"Znaleziono {len(matched)} par, pokolorowano {len(rows_to_color)} wierszy")
 
 wb.Close()
 excel.Quit()
