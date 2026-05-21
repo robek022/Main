@@ -2,6 +2,7 @@ import win32com.client
 from win32com.client import dynamic
 import time
 import os
+from datetime import datetime
 
 SapGuiAuto = win32com.client.GetObject("SAPGUI")
 application = dynamic.Dispatch(SapGuiAuto.GetScriptingEngine)
@@ -22,25 +23,73 @@ print("Wykonuje F8...")
 session.findById("wnd[1]").sendVKey(8)
 time.sleep(3)
 
-print("Otwieram menu Export...")
 shell = session.findById("wnd[0]/shellcont/shell")
-shell.pressToolbarButton("&MB_EXPORT")
-time.sleep(1)
+row_count = shell.RowCount
+col_count = shell.ColumnCount
+print(f"Znaleziono {row_count} wierszy, {col_count} kolumn")
 
-print("Wybieram Spreadsheet...")
-shell.selectContextMenuItem("&SPREADSHEET")
-time.sleep(2)
+col_ids = []
+try:
+    for col in shell.ColumnOrder:
+        col_ids.append(str(col))
+except:
+    for i in range(col_count):
+        try:
+            col_ids.append(shell.ColumnOrder(i))
+        except:
+            col_ids.append(f"Col{i}")
 
-print("Klikam OK w popup formatu...")
-# "Select from All Available Formats" jest juz zaznaczone - klikamy OK
-session.findById("wnd[1]/tbar[0]/btn[0]").press()
-time.sleep(2)
+def parse_sap_amount(val):
+    if not val or str(val).strip() == "":
+        return 0
+    s = str(val).strip()
+    negative = s.endswith("-")
+    if negative:
+        s = s[:-1]
+    s = s.replace(".", "").replace(",", ".")
+    try:
+        return -float(s) if negative else float(s)
+    except:
+        return val
 
-print("Podaje sciezke zapisu...")
-SAVE_PATH = r"C:\Users\mrobak\feban_raport.xlsx"
-session.findById("wnd[1]/usr/ctxtDY_PATH").text = os.path.dirname(SAVE_PATH) + "\\"
-session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = os.path.basename(SAVE_PATH)
-session.findById("wnd[1]/tbar[0]/btn[0]").press()
-time.sleep(2)
+kwbtr_idx = col_ids.index("KWBTR") if "KWBTR" in col_ids else None
 
-print(f"Zapisano plik: {SAVE_PATH}")
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+SAVE_PATH = rf"C:\Users\mrobak\feban_raport_{timestamp}.xlsx"
+
+print("Czytam dane z FEBAN...")
+excel = win32com.client.Dispatch("Excel.Application")
+excel.Visible = False
+excel.DisplayAlerts = False
+wb = excel.Workbooks.Add()
+ws = wb.Sheets(1)
+
+for i, col_id in enumerate(col_ids):
+    ws.Cells(1, i + 1).Value = col_id
+
+for row in range(row_count):
+    for col_idx, col_id in enumerate(col_ids):
+        try:
+            val = shell.GetCellValue(row, col_id)
+        except:
+            val = ""
+        if col_idx == kwbtr_idx:
+            val = parse_sap_amount(val)
+        ws.Cells(row + 2, col_idx + 1).Value = val
+    print(f"  Wiersz {row+1}/{row_count}")
+
+print("Zapisuje plik...")
+wb.SaveAs(SAVE_PATH)
+
+try:
+    if kwbtr_idx is not None:
+        ws.Columns(kwbtr_idx + 1).NumberFormat = "#,##0.00"
+    wb.Save()
+except Exception as e:
+    print(f"  (Formatowanie kolumny pominiete: {e})")
+
+wb.Close()
+excel.Quit()
+
+print(f"Zapisano: {SAVE_PATH}")
+os.startfile(SAVE_PATH)
