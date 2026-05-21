@@ -11,11 +11,6 @@ session = connection.Children(0)
 
 print("Polaczono z SAP")
 
-session.findById("wnd[0]").sendVKey(12)
-time.sleep(0.5)
-session.findById("wnd[0]").sendVKey(12)
-time.sleep(0.5)
-
 print("Otwieram FEBAN...")
 session.findById("wnd[0]/tbar[0]/okcd").text = "/nFEBAN"
 session.findById("wnd[0]").sendVKey(0)
