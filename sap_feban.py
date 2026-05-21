@@ -13,5 +13,5 @@ session.findById("wnd[0]").sendVKey(0)
 time.sleep(1)
 
 # --- Wpisanie Company Code 2052 ---
-session.findById("wnd[1]/usr/ctxtRF05L-BUKRS").text = "2052"
+session.findById("wnd[1]/usr/ctxtSL_BUKRS-LOW").text = "2052"
 session.findById("wnd[1]").sendVKey(0)
