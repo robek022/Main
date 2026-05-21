@@ -4,7 +4,8 @@ import os
 
 # --- Połączenie z SAP ---
 SapGuiAuto = win32com.client.GetObject("SAPGUI")
-application = SapGuiAuto.GetScriptingEngine
+# Dispatch() wymagane po makepy - GetScriptingEngine zwraca ISapComponentTarget bez Children
+application = win32com.client.Dispatch(SapGuiAuto.GetScriptingEngine)
 connection = application.Children(0)
 session = connection.Children(0)
 
