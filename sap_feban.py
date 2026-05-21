@@ -124,6 +124,20 @@ if kwbtr_idx is not None:
     wb.Save()
     print(f"Znaleziono {len(matched)} par, pokolorowano {len(rows_to_color)} wierszy")
 
+# Szukaj tekstu w kolumnie B i koloruj wiersze na jasnozolty
+SEARCH_TEXT = "@5D\\QPosting in Subledger Accounting Made as On Account Posting@"
+LIGHT_YELLOW = 255 + 255 * 256 + 153 * 65536  # RGB(255, 255, 153)
+print("Szukam tekstu w kolumnie B...")
+yellow_count = 0
+for row in range(row_count):
+    excel_row = row + 2
+    val = ws.Cells(excel_row, 2).Value
+    if val and SEARCH_TEXT in str(val):
+        ws.Rows(excel_row).Interior.Color = LIGHT_YELLOW
+        yellow_count += 1
+wb.Save()
+print(f"Pokolorowano {yellow_count} wierszy na zolty")
+
 wb.Close()
 excel.Quit()
 
