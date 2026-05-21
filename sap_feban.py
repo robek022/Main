@@ -8,19 +8,29 @@ application = SapGuiAuto.GetScriptingEngine
 connection = application.Children(0)
 session = connection.Children(0)
 
-# --- Wejście do FEBAN ---
-session.findById("wnd[0]/tbar[0]/okcd").text = "/nfeban"
-session.findById("wnd[0]").sendVKey(0)
-time.sleep(1)
+print("Połączono z SAP")
 
-# --- Wpisanie Company Code 2052 ---
+# --- Wyjście z ewentualnego popupu / poprzedniej transakcji ---
+session.findById("wnd[0]").sendVKey(12)  # ESC
+time.sleep(0.5)
+session.findById("wnd[0]").sendVKey(12)  # ESC (drugi raz na wszelki wypadek)
+time.sleep(0.5)
+
+# --- Wejście do FEBAN ---
+print("Otwieram FEBAN...")
+session.findById("wnd[0]/tbar[0]/okcd").text = "/nFEBAN"
+session.findById("wnd[0]").sendVKey(0)  # Enter
+time.sleep(2)
+
+print("Wpisuję Company Code 2052...")
 session.findById("wnd[1]/usr/ctxtSL_BUKRS-LOW").text = "2052"
 
 # --- Execute (F8) ---
+print("Wykonuję F8...")
 session.findById("wnd[1]").sendVKey(8)
-time.sleep(2)
+time.sleep(3)
 
-# --- Export do Excel przez przycisk Spreadsheet w ALV grid ---
+print("Klikam Spreadsheet...")
 shell = session.findById(
     "wnd[0]/usr/ssubAREA_N2P:FEB_BSPROC_FE:0113/cntlAREA_N2P/shellcont/shell"
 )
