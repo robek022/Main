@@ -26,7 +26,7 @@ time.sleep(3)
 print("Klikam Spreadsheet...")
 shell_raw = session.findById("wnd[0]/shellcont/shell")
 shell = win32com.client.gencache.EnsureDispatch(shell_raw)
-shell.pressToolbarButton("&SPREADSHEET")
+shell.pressToolbarButton("&MB_EXPORT")
 time.sleep(1)
 
 session.findById(
