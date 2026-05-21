@@ -24,9 +24,7 @@ session.findById("wnd[1]").sendVKey(8)
 time.sleep(3)
 
 print("Klikam Spreadsheet...")
-shell_raw = session.findById(
-    "wnd[0]/usr/ssubAREA_N2P:FEB_BSPROC_FE:0113/cntlAREA_N2P/shellcont/shell"
-)
+shell_raw = session.findById("wnd[0]/shellcont/shell")
 shell = win32com.client.gencache.EnsureDispatch(shell_raw)
 shell.pressToolbarButton("&SPREADSHEET")
 time.sleep(1)
