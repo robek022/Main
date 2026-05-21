@@ -1,5 +1,6 @@
 import win32com.client
 import time
+import os
 
 # --- Połączenie z SAP ---
 SapGuiAuto = win32com.client.GetObject("SAPGUI")
@@ -18,3 +19,22 @@ session.findById("wnd[1]/usr/ctxtSL_BUKRS-LOW").text = "2052"
 # --- Execute (F8) ---
 session.findById("wnd[1]").sendVKey(8)
 time.sleep(2)
+
+# --- Export do Excel ---
+# Kliknięcie przycisku "Spreadsheet" w toolbarze listy
+session.findById("wnd[0]/tbar[1]/btn[45]").press()
+time.sleep(1)
+
+# Popup "Select Spreadsheet" - wybierz "Select from All Available Formats" (XLSX)
+session.findById("wnd[1]/usr/subSUBSCREEN_STEPLOOP:SAPLSPO5:0150/sub:SAPLSPO5:0150/radSPOPLI-SELFLAG[2,0]").select()
+session.findById("wnd[1]/tbar[0]/btn[0]").press()  # OK
+time.sleep(1)
+
+# Dialog zapisu pliku
+SAVE_PATH = r"C:\Users\Public\feban_raport.xlsx"
+session.findById("wnd[1]/usr/ctxtDY_PATH").text = os.path.dirname(SAVE_PATH) + "\\"
+session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = os.path.basename(SAVE_PATH)
+session.findById("wnd[1]/tbar[0]/btn[0]").press()  # Generuj / OK
+time.sleep(2)
+
+print(f"Zapisano plik: {SAVE_PATH}")
