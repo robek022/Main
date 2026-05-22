@@ -292,23 +292,23 @@ time.sleep(2)
 print(f"Wpisuje parametry FBL3N (konto 10441000, bukrs 2052, data {today_str})...")
 
 try:
-    session2.findById("wnd[0]/usr/ctxtSO_SAKNR-LOW").text = "10441000"
+    session2.findById("wnd[0]/usr/ctxtSD_SAKNR-LOW").text = "10441000"
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono pola G/L Account: {e}")
 
 try:
-    session2.findById("wnd[0]/usr/ctxtSO_BUKRS-LOW").text = "2052"
+    session2.findById("wnd[0]/usr/ctxtSD_BUKRS-LOW").text = "2052"
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono pola Company Code: {e}")
 
 try:
-    session2.findById("wnd[0]/usr/radX_AISEL").select()
+    session2.findById("wnd[0]/usr/radX_OPSEL").select()
     print("  Zaznaczono Open items")
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono radio Open items: {e}")
 
 try:
-    session2.findById("wnd[0]/usr/ctxtSD_STIDA").text = today_str
+    session2.findById("wnd[0]/usr/ctxtPA_STIDA").text = today_str
     print(f"  Ustawiono date: {today_str}")
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono pola daty: {e}")
