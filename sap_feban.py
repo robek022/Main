@@ -283,3 +283,102 @@ excel.Quit()
 
 print(f"Zapisano: {SAVE_PATH}")
 os.startfile(SAVE_PATH)
+
+# === FBL3N ===
+print("\nPrzechodzę do FBL3N...")
+session.findById("wnd[0]/tbar[0]/okcd").text = "/nFBL3N"
+session.findById("wnd[0]").sendVKey(0)
+time.sleep(2)
+
+today_str = datetime.now().strftime("%d.%m.%Y")
+
+print(f"Wpisuje parametry FBL3N (konto 10441000, bukrs 2052, data {today_str})...")
+try:
+    session.findById("wnd[0]/usr/ctxtSO_SAKNR-LOW").text = "10441000"
+except Exception as e:
+    print(f"  UWAGA: Nie znaleziono pola G/L Account: {e}")
+
+try:
+    session.findById("wnd[0]/usr/ctxtSO_BUKRS-LOW").text = "2052"
+except Exception as e:
+    print(f"  UWAGA: Nie znaleziono pola Company Code: {e}")
+
+try:
+    session.findById("wnd[0]/usr/radX_AISEL").select()
+    print("  Zaznaczono Open items")
+except Exception as e:
+    print(f"  UWAGA: Nie znaleziono radio Open items: {e}")
+
+try:
+    session.findById("wnd[0]/usr/ctxtSD_STIDA").text = today_str
+    print(f"  Ustawiono date: {today_str}")
+except Exception as e:
+    print(f"  UWAGA: Nie znaleziono pola daty: {e}")
+
+print("Wykonuje F8 w FBL3N...")
+session.findById("wnd[0]").sendVKey(8)
+time.sleep(4)
+
+# Ctrl+F9 = Select Layout = VKey 33
+print("Otwieram wybor layoutu (Ctrl+F9)...")
+session.findById("wnd[0]").sendVKey(33)
+time.sleep(2)
+
+print("Wybieram layout FEBAN2052MR...")
+layout_found = False
+
+# Proba 1: grid ALV w dialogu wnd[1]
+try:
+    table = session.findById("wnd[1]/usr/cntlALV_CONTAINER_1/shellcont/shell")
+    rows = table.RowCount
+    for r in range(rows):
+        try:
+            val = table.GetCellValue(r, "VARIANT")
+            if str(val).strip().upper() == "FEBAN2052MR":
+                table.setCurrentCell(r, "VARIANT")
+                table.doubleClickCurrentCell()
+                layout_found = True
+                print(f"  Layout znaleziony w wierszu {r} (ALV grid)")
+                break
+        except:
+            continue
+except Exception as e:
+    print(f"  Proba 1 (ALV grid) nieudana: {e}")
+
+# Proba 2: zwykla lista w dialogu wnd[1]
+if not layout_found:
+    try:
+        table = session.findById("wnd[1]/usr/lsT_VARIANT")
+        rows = table.RowCount
+        for r in range(rows):
+            try:
+                val = table.GetCellValue(r, "VARIANT")
+                if str(val).strip().upper() == "FEBAN2052MR":
+                    table.setCurrentCell(r, "VARIANT")
+                    table.doubleClickCurrentCell()
+                    layout_found = True
+                    print(f"  Layout znaleziony w wierszu {r} (lista)")
+                    break
+            except:
+                continue
+    except Exception as e:
+        print(f"  Proba 2 (lista) nieudana: {e}")
+
+# Proba 3: pole tekstowe filtra
+if not layout_found:
+    try:
+        session.findById("wnd[1]/usr/txtV-LOW").text = "FEBAN2052MR"
+        session.findById("wnd[1]").sendVKey(0)
+        time.sleep(0.5)
+        session.findById("wnd[1]").sendVKey(2)
+        layout_found = True
+        print("  Layout wybrany przez pole filtra")
+    except Exception as e:
+        print(f"  Proba 3 (filtr) nieudana: {e}")
+
+if not layout_found:
+    print("  UWAGA: Nie udalo sie automatycznie wybrac layoutu.")
+    print("  Wybierz recznie layout 'FEBAN2052MR' w otwartym oknie SAP.")
+else:
+    time.sleep(1)
+    print("FBL3N gotowe z layoutem FEBAN2052MR")
