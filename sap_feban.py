@@ -55,52 +55,13 @@ def parse_sap_amount(val):
 
 NOTE_PATH = "wnd[0]/usr/ssubAREA_N2P:FEB_BSPROC_FE:0113/cntlAREA_N2P/shellcont/shell"
 
-def dump_wnd1():
-    try:
-        wnd1 = session.findById("wnd[1]")
-        def _dump(obj, depth=0):
-            if depth > 4:
-                return
-            try:
-                t = ""
-                try:
-                    t = f"  text='{obj.text[:40]}'" if obj.text and obj.text.strip() else ""
-                except:
-                    pass
-                print(f"{'  '*depth}{obj.Id}  [{obj.Type}]{t}")
-                try:
-                    for i in range(obj.Children.Count):
-                        _dump(obj.Children(i), depth+1)
-                except:
-                    pass
-            except:
-                pass
-        _dump(wnd1)
-    except:
-        pass
-
 def dismiss_popup():
-    """Klikaj Yes jesli pojawi sie popup 'Changes will be lost'"""
     try:
-        session.findById("wnd[1]")
-        print("  [popup wykryty - dumpuje strukture:]")
-        dump_wnd1()
+        session.findById("wnd[1]/usr/btnBUTTON_1").press()
+        time.sleep(0.4)
+        return True
     except:
         return False
-    for btn_path in [
-        "wnd[1]/usr/btnSPOP-VAROPTION1",
-        "wnd[1]/tbar[0]/btn[6]",
-        "wnd[1]/tbar[0]/btn[7]",
-        "wnd[1]/tbar[0]/btn[0]",
-    ]:
-        try:
-            session.findById(btn_path).press()
-            time.sleep(0.3)
-            print(f"  [klikniety: {btn_path}]")
-            return True
-        except:
-            continue
-    return False
 
 def find_working_note_path():
     try:
