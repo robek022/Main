@@ -112,6 +112,12 @@ kwbtr_idx = col_ids.index("KWBTR") if "KWBTR" in col_ids else None
 print("Czytam dane z gridu FEBAN...")
 grid_data = []
 for row in range(row_count):
+    if row % 20 == 0:
+        try:
+            shell.firstVisibleRow = row
+            time.sleep(0.4)
+        except:
+            pass
     row_data = {}
     for col_id in col_ids:
         try:
