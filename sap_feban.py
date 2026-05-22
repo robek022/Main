@@ -2,6 +2,7 @@ import win32com.client
 from win32com.client import dynamic
 import time
 import os
+import re
 from datetime import datetime
 from collections import defaultdict
 
@@ -54,6 +55,19 @@ def parse_sap_amount(val):
         return val
 
 NOTE_PATH = "wnd[0]/usr/ssubAREA_N2P:FEB_BSPROC_FE:0113/cntlAREA_N2P/shellcont/shell"
+
+def note_to_value(note):
+    """Jezeli nota to sama liczba (np. payment run ref), zamien na int."""
+    if not note:
+        return note
+    s = str(note).strip()
+    if re.match(r'^\d[\d.,]*$', s):
+        try:
+            f = float(s.replace(".", "").replace(",", "."))
+            return int(f) if f == int(f) else f
+        except:
+            pass
+    return note
 
 def dismiss_popup():
     try:
@@ -140,7 +154,7 @@ for i, col_id in enumerate(all_cols):
 for row_idx, row_data in enumerate(grid_data):
     for col_idx, col_id in enumerate(col_ids):
         ws.Cells(row_idx + 2, col_idx + 1).Value = row_data[col_id]
-    ws.Cells(row_idx + 2, len(col_ids) + 1).Value = notes[row_idx]
+    ws.Cells(row_idx + 2, len(col_ids) + 1).Value = note_to_value(notes[row_idx])
 
 wb.SaveAs(SAVE_PATH)
 
@@ -194,6 +208,19 @@ if kwbtr_idx is not None:
 
     wb.Save()
     print(f"Znaleziono {len(matched)} par, pokolorowano {len(rows_to_color)} wierszy")
+
+# Koloruj wiersze gdzie Note to Payee to sama liczba (payment run) na jasnorozowy
+note_col = len(col_ids) + 1
+LIGHT_PINK = 255 + 220 * 256 + 220 * 65536  # RGB(255, 220, 220)
+pink_count = 0
+for row in range(len(grid_data)):
+    excel_row = row + 2
+    val = ws.Cells(excel_row, note_col).Value
+    if val is not None and isinstance(val, (int, float)):
+        ws.Rows(excel_row).Interior.Color = LIGHT_PINK
+        pink_count += 1
+wb.Save()
+print(f"Pokolorowano {pink_count} wierszy na rozowy (payment run)")
 
 # Szukaj tekstu w kolumnie B i koloruj wiersze na jasnozolty
 SEARCH_TEXT = "@5D\\QPosting in Subledger Accounting Made as On Account Posting@"
