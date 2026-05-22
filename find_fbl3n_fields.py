@@ -7,10 +7,7 @@ application = dynamic.Dispatch(SapGuiAuto.GetScriptingEngine)
 connection = application.Children(0)
 session = connection.Children(0)
 
-print("Otwieram FBL3N...")
-session.findById("wnd[0]/tbar[0]/okcd").text = "/nFBL3N"
-session.findById("wnd[0]").sendVKey(0)
-time.sleep(2)
+print("Czytam otwarty ekran FBL3N...")
 
 lines = []
 
