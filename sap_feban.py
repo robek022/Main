@@ -277,51 +277,56 @@ for row in range(len(grid_data)):
 wb.Save()
 print(f"Oznaczono {cashpool_count} wierszy jako CASHPOOLING")
 
-# === FBL3N ===
-print("\nPrzechodzę do FBL3N...")
-session.findById("wnd[0]/tbar[0]/okcd").text = "/nFBL3N"
-session.findById("wnd[0]").sendVKey(0)
-time.sleep(2)
+# === FBL3N - nowe okno SAP ===
+print("\nOtwieram nowe okno SAP dla FBL3N...")
+session.createSession()
+time.sleep(3)
+session2 = connection.Children(1)
 
 today_str = datetime.now().strftime("%d.%m.%Y")
+print("Nawiguje do FBL3N...")
+session2.findById("wnd[0]/tbar[0]/okcd").text = "/nFBL3N"
+session2.findById("wnd[0]").sendVKey(0)
+time.sleep(2)
+
 print(f"Wpisuje parametry FBL3N (konto 10441000, bukrs 2052, data {today_str})...")
 
 try:
-    session.findById("wnd[0]/usr/ctxtSO_SAKNR-LOW").text = "10441000"
+    session2.findById("wnd[0]/usr/ctxtSO_SAKNR-LOW").text = "10441000"
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono pola G/L Account: {e}")
 
 try:
-    session.findById("wnd[0]/usr/ctxtSO_BUKRS-LOW").text = "2052"
+    session2.findById("wnd[0]/usr/ctxtSO_BUKRS-LOW").text = "2052"
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono pola Company Code: {e}")
 
 try:
-    session.findById("wnd[0]/usr/radX_AISEL").select()
+    session2.findById("wnd[0]/usr/radX_AISEL").select()
     print("  Zaznaczono Open items")
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono radio Open items: {e}")
 
 try:
-    session.findById("wnd[0]/usr/ctxtSD_STIDA").text = today_str
+    session2.findById("wnd[0]/usr/ctxtSD_STIDA").text = today_str
     print(f"  Ustawiono date: {today_str}")
 except Exception as e:
     print(f"  UWAGA: Nie znaleziono pola daty: {e}")
 
 print("Wykonuje F8 w FBL3N...")
-session.findById("wnd[0]").sendVKey(8)
+session2.findById("wnd[0]").sendVKey(8)
 time.sleep(4)
 
 # Ctrl+F9 = Select Layout (VKey 33)
 print("Otwieram wybor layoutu (Ctrl+F9)...")
-session.findById("wnd[0]").sendVKey(33)
+session2.findById("wnd[0]").sendVKey(33)
 time.sleep(2)
 
 print("Wybieram layout FEBAN2052MR...")
 layout_found = False
 
 try:
-    table = session.findById("wnd[1]/usr/cntlALV_CONTAINER_1/shellcont/shell")
+    table = session2.findById("wnd[1]/usr/cntlALV_CONTAINER_1/shellcont/shell")
     for r in range(table.RowCount):
         try:
             if str(table.GetCellValue(r, "VARIANT")).strip().upper() == "FEBAN2052MR":
@@ -337,7 +342,7 @@ except Exception as e:
 
 if not layout_found:
     try:
-        table = session.findById("wnd[1]/usr/lsT_VARIANT")
+        table = session2.findById("wnd[1]/usr/lsT_VARIANT")
         for r in range(table.RowCount):
             try:
                 if str(table.GetCellValue(r, "VARIANT")).strip().upper() == "FEBAN2052MR":
@@ -353,10 +358,10 @@ if not layout_found:
 
 if not layout_found:
     try:
-        session.findById("wnd[1]/usr/txtV-LOW").text = "FEBAN2052MR"
-        session.findById("wnd[1]").sendVKey(0)
+        session2.findById("wnd[1]/usr/txtV-LOW").text = "FEBAN2052MR"
+        session2.findById("wnd[1]").sendVKey(0)
         time.sleep(0.5)
-        session.findById("wnd[1]").sendVKey(2)
+        session2.findById("wnd[1]").sendVKey(2)
         layout_found = True
         print("  Layout wybrany przez pole filtra")
     except Exception as e:
@@ -376,7 +381,7 @@ fbl3n_row_count = 0
 
 print("Czytam dane z gridu FBL3N...")
 try:
-    fbl3n_shell = session.findById("wnd[0]/shellcont/shell")
+    fbl3n_shell = session2.findById("wnd[0]/shellcont/shell")
 
     prev = -1
     while True:
