@@ -55,6 +55,20 @@ def parse_sap_amount(val):
 
 NOTE_PATH = "wnd[0]/usr/ssubAREA_N2P:FEB_BSPROC_FE:0113/cntlAREA_N2P/shellcont/shell"
 
+def dismiss_popup():
+    """Klikaj Yes jesli pojawi sie popup 'Changes will be lost'"""
+    for btn_path in [
+        "wnd[1]/usr/btnSPOP-VAROPTION1",
+        "wnd[1]/tbar[0]/btn[0]",
+    ]:
+        try:
+            session.findById(btn_path).press()
+            time.sleep(0.3)
+            return True
+        except:
+            continue
+    return False
+
 def find_working_note_path():
     try:
         session.findById(NOTE_PATH)
@@ -95,7 +109,9 @@ for row in range(row_count):
     try:
         shell.setCurrentCell(row, col_ids[0])
         shell.doubleClickCurrentCell()
-        time.sleep(1.0)
+        time.sleep(0.5)
+        dismiss_popup()
+        time.sleep(0.6)
         if working_path:
             try:
                 note = session.findById(working_path).text
