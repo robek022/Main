@@ -53,35 +53,106 @@ def parse_sap_amount(val):
     except:
         return val
 
+# Mozliwe sciezki do pola Note to Payee
+NOTE_PATHS = [
+    "wnd[0]/usr/ssubAREA_N2P/txtNOTE2PAYEE",
+    "wnd[0]/usr/ssubAREA_N2P/txtSGTXT",
+    "wnd[0]/usr/ssubAREA_N2P/txtNOTE",
+    "wnd[0]/usr/ssubAREA_N2P/txt[0]",
+    "wnd[0]/usr/txtNOTE2PAYEE",
+    "wnd[0]/usr/txtSGTXT",
+]
+
+def read_note_to_payee():
+    for path in NOTE_PATHS:
+        try:
+            return session.findById(path).text
+        except:
+            continue
+    return ""
+
+def find_working_note_path():
+    for path in NOTE_PATHS:
+        try:
+            session.findById(path)
+            print(f"  Znaleziono Note to Payee pod: {path}")
+            return path
+        except:
+            continue
+    print("  UWAGA: Nie znaleziono pola Note to Payee - kolumna bedzie pusta")
+    print("  Uruchom find_shell.py aby znalezc wlasciwa sciezke")
+    return None
+
 kwbtr_idx = col_ids.index("KWBTR") if "KWBTR" in col_ids else None
 
+# Faza 1: wczytaj dane z gridu
+print("Czytam dane z gridu FEBAN...")
+grid_data = []
+for row in range(row_count):
+    row_data = {}
+    for col_id in col_ids:
+        try:
+            val = shell.GetCellValue(row, col_id)
+        except:
+            val = ""
+        if col_id == "KWBTR":
+            val = parse_sap_amount(val)
+        row_data[col_id] = val
+    grid_data.append(row_data)
+    print(f"  Grid wiersz {row+1}/{row_count}")
+
+# Faza 2: klikaj kazdy wiersz i czytaj Note to Payee
+print("Czytam Note to Payee (klikam kazdy wiersz)...")
+
+# Sprawdz sciezke na pierwszym wierszu
+shell.setCurrentCell(0, col_ids[0])
+time.sleep(1)
+working_path = find_working_note_path()
+
+notes = []
+for row in range(row_count):
+    try:
+        shell.setCurrentCell(row, col_ids[0])
+        time.sleep(0.5)
+        if working_path:
+            try:
+                note = session.findById(working_path).text
+            except:
+                note = ""
+        else:
+            note = ""
+    except Exception as e:
+        note = ""
+        print(f"  Wiersz {row+1}: blad - {e}")
+    notes.append(note)
+    preview = note[:60].replace("\n", " ") if note else "(brak)"
+    print(f"  Note wiersz {row+1}/{row_count}: {preview}")
+
+# Zapis do Excela
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 SAVE_PATH = rf"C:\Users\mrobak\feban_raport_{timestamp}.xlsx"
 
-print("Czytam dane z FEBAN...")
+print("Zapisuje do Excela...")
 excel = win32com.client.Dispatch("Excel.Application")
 excel.Visible = False
 excel.DisplayAlerts = False
 wb = excel.Workbooks.Add()
 ws = wb.Sheets(1)
 
-for i, col_id in enumerate(col_ids):
+# Naglowki - kolumny SAP + Note to Payee na koncu
+all_cols = col_ids + ["Note to Payee"]
+for i, col_id in enumerate(all_cols):
     ws.Cells(1, i + 1).Value = col_id
 
-for row in range(row_count):
+# Dane
+for row_idx, row_data in enumerate(grid_data):
     for col_idx, col_id in enumerate(col_ids):
-        try:
-            val = shell.GetCellValue(row, col_id)
-        except:
-            val = ""
-        if col_idx == kwbtr_idx:
-            val = parse_sap_amount(val)
-        ws.Cells(row + 2, col_idx + 1).Value = val
-    print(f"  Wiersz {row+1}/{row_count}")
+        ws.Cells(row_idx + 2, col_idx + 1).Value = row_data[col_id]
+    ws.Cells(row_idx + 2, len(col_ids) + 1).Value = notes[row_idx]
 
-print("Zapisuje plik...")
 wb.SaveAs(SAVE_PATH)
 
+# Formatowanie kolumny KWBTR
 try:
     if kwbtr_idx is not None:
         ws.Columns(kwbtr_idx + 1).NumberFormat = "#,##0.00"
@@ -93,10 +164,10 @@ except Exception as e:
 if kwbtr_idx is not None:
     print("Szukam par +/- w kolumnie KWBTR...")
 
-    positives = defaultdict(list)   # kwota -> lista excel_row
+    positives = defaultdict(list)
     negatives = defaultdict(list)
 
-    for row in range(row_count):
+    for row in range(len(grid_data)):
         excel_row = row + 2
         val = ws.Cells(excel_row, kwbtr_idx + 1).Value
         if val is None:
@@ -129,7 +200,7 @@ SEARCH_TEXT = "@5D\\QPosting in Subledger Accounting Made as On Account Posting@
 LIGHT_YELLOW = 255 + 255 * 256 + 153 * 65536  # RGB(255, 255, 153)
 print("Szukam tekstu w kolumnie B...")
 yellow_count = 0
-for row in range(row_count):
+for row in range(len(grid_data)):
     excel_row = row + 2
     val = ws.Cells(excel_row, 2).Value
     if val and SEARCH_TEXT in str(val):
