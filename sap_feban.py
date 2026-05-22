@@ -26,6 +26,26 @@ session.findById("wnd[1]").sendVKey(8)
 time.sleep(3)
 
 shell = session.findById("wnd[0]/shellcont/shell")
+
+# Przewin liste do konca zeby wymusic zaladowanie wszystkich wierszy
+print("Laduje wszystkie wiersze...")
+prev = -1
+while True:
+    current = shell.RowCount
+    if current == prev:
+        break
+    prev = current
+    try:
+        shell.firstVisibleRow = current
+    except:
+        break
+    time.sleep(0.3)
+try:
+    shell.firstVisibleRow = 0
+except:
+    pass
+time.sleep(0.5)
+
 row_count = shell.RowCount
 col_count = shell.ColumnCount
 print(f"Znaleziono {row_count} wierszy, {col_count} kolumn")
