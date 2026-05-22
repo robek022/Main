@@ -146,11 +146,22 @@ wb.SaveAs(SAVE_PATH)
 
 # Formatowanie kolumny KWBTR
 try:
+    note_col = len(col_ids) + 1
+    last_row = row_count + 1
+
+    # Left-align wszystkich komorek z danymi
+    ws.Range(ws.Cells(1, 1), ws.Cells(last_row, note_col)).HorizontalAlignment = -4131
+
+    # KWBTR - liczba bez miejsc po przecinku
     if kwbtr_idx is not None:
-        ws.Columns(kwbtr_idx + 1).NumberFormat = "#,##0.00"
+        ws.Range(ws.Cells(1, kwbtr_idx + 1), ws.Cells(last_row, kwbtr_idx + 1)).NumberFormat = "#,##0"
+
+    # Note to Payee - format tekstowy
+    ws.Range(ws.Cells(1, note_col), ws.Cells(last_row, note_col)).NumberFormat = "@"
+
     wb.Save()
 except Exception as e:
-    print(f"  (Formatowanie kolumny pominiete: {e})")
+    print(f"  (Formatowanie pominiete: {e})")
 
 # Szukaj par +/- w kolumnie KWBTR i koloruj wiersze na jasnozielono
 if kwbtr_idx is not None:
