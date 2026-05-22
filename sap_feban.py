@@ -53,35 +53,16 @@ def parse_sap_amount(val):
     except:
         return val
 
-# Mozliwe sciezki do pola Note to Payee
-NOTE_PATHS = [
-    "wnd[0]/usr/ssubAREA_N2P/txtNOTE2PAYEE",
-    "wnd[0]/usr/ssubAREA_N2P/txtSGTXT",
-    "wnd[0]/usr/ssubAREA_N2P/txtNOTE",
-    "wnd[0]/usr/ssubAREA_N2P/txt[0]",
-    "wnd[0]/usr/txtNOTE2PAYEE",
-    "wnd[0]/usr/txtSGTXT",
-]
-
-def read_note_to_payee():
-    for path in NOTE_PATHS:
-        try:
-            return session.findById(path).text
-        except:
-            continue
-    return ""
+NOTE_PATH = "wnd[0]/usr/ssubAREA_N2P:FEB_BSPROC_FE:0113/cntlAREA_N2P/shellcont/shell"
 
 def find_working_note_path():
-    for path in NOTE_PATHS:
-        try:
-            session.findById(path)
-            print(f"  Znaleziono Note to Payee pod: {path}")
-            return path
-        except:
-            continue
-    print("  UWAGA: Nie znaleziono pola Note to Payee - kolumna bedzie pusta")
-    print("  Uruchom find_shell.py aby znalezc wlasciwa sciezke")
-    return None
+    try:
+        session.findById(NOTE_PATH)
+        print(f"  Znaleziono Note to Payee pod: {NOTE_PATH}")
+        return NOTE_PATH
+    except:
+        print("  UWAGA: Nie znaleziono pola Note to Payee - kolumna bedzie pusta")
+        return None
 
 kwbtr_idx = col_ids.index("KWBTR") if "KWBTR" in col_ids else None
 
