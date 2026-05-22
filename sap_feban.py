@@ -262,6 +262,22 @@ for row in range(len(grid_data)):
 wb.Save()
 print(f"Pokolorowano {yellow_count} wierszy na zolty")
 
+CASHPOOLING_KEYWORDS = ["sweep credit", "cash", "nazareth", "konsolidacja salda"]
+cashpool_count = 0
+print("Szukam slow kluczowych CASHPOOLING w kolumnie AA...")
+for row in range(len(grid_data)):
+    excel_row = row + 2
+    note_val = ws.Cells(excel_row, note_col).Value
+    if note_val:
+        note_lower = str(note_val).lower()
+        if any(kw in note_lower for kw in CASHPOOLING_KEYWORDS):
+            cell = ws.Cells(excel_row, 24)
+            cell.Value = "CASHPOOLING"
+            cell.Font.Bold = True
+            cashpool_count += 1
+wb.Save()
+print(f"Oznaczono {cashpool_count} wierszy jako CASHPOOLING")
+
 wb.Close()
 excel.Quit()
 
