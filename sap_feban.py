@@ -94,8 +94,8 @@ notes = []
 for row in range(row_count):
     try:
         shell.setCurrentCell(row, col_ids[0])
-        shell.selectedRows = str(row)
-        time.sleep(0.8)
+        shell.doubleClickCurrentCell()
+        time.sleep(1.0)
         if working_path:
             try:
                 note = session.findById(working_path).text
