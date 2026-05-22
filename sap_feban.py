@@ -155,7 +155,7 @@ try:
     note_col = len(col_ids) + 1
     last_row = row_count + 1
     ws.Range(ws.Cells(1, note_col), ws.Cells(last_row, note_col)).HorizontalAlignment = -4131
-    ws.Range(ws.Cells(1, note_col), ws.Cells(last_row, note_col)).NumberFormat = "@"
+    ws.Range(ws.Cells(1, note_col), ws.Cells(last_row, note_col)).NumberFormat = "#,##0"
     wb.Save()
 except Exception as e:
     print(f"  (Formatowanie AA pominiete: {e})")
