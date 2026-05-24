@@ -11,7 +11,8 @@ application = dynamic.Dispatch(SapGuiAuto.GetScriptingEngine)
 connection = application.Children(0)
 session = connection.Children(0)
 
-print("Polaczono z SAP")
+company_code = input("Wpisz numer spolki: ").strip()
+print(f"Polaczono z SAP - spolka {company_code}")
 
 print("Otwieram FEBAN...")
 session.findById("wnd[0]/tbar[0]/okcd").text = "/nFEBAN"
@@ -19,7 +20,7 @@ session.findById("wnd[0]").sendVKey(0)
 time.sleep(2)
 
 print("Wpisuje Company Code 2052...")
-session.findById("wnd[1]/usr/ctxtSL_BUKRS-LOW").text = "2052"
+session.findById("wnd[1]/usr/ctxtSL_BUKRS-LOW").text = company_code
 
 print("Wykonuje F8...")
 session.findById("wnd[1]").sendVKey(8)
@@ -164,7 +165,7 @@ for row in range(row_count):
 
 # === EXCEL - otwieramy i trzymamy otwarty az do konca ===
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-SAVE_PATH = rf"C:\Users\mrobak\feban_raport_{timestamp}.xlsx"
+SAVE_PATH = rf"C:\Users\mrobak\feban_raport_{company_code}_{timestamp}.xlsx"
 
 print("Tworze plik Excel...")
 excel = win32com.client.Dispatch("Excel.Application")
