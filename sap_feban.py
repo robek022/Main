@@ -320,171 +320,187 @@ session2.findById("wnd[0]/tbar[0]/okcd").text = "/nFBL3N"
 session2.findById("wnd[0]").sendVKey(0)
 time.sleep(2)
 
-print(f"Wpisuje parametry FBL3N (konto 10441000, bukrs 2052, data {today_str})...")
-
+print(f"Wpisuje parametry FBL3N (konto 10441000, spolka {company_code}, data {today_str})...")
 try:
     session2.findById("wnd[0]/usr/ctxtSD_SAKNR-LOW").text = "10441000"
 except Exception as e:
-    print(f"  UWAGA: Nie znaleziono pola G/L Account: {e}")
-
+    print(f"  UWAGA: G/L Account: {e}")
 try:
-    session2.findById("wnd[0]/usr/ctxtSD_BUKRS-LOW").text = "2052"
+    session2.findById("wnd[0]/usr/ctxtSD_BUKRS-LOW").text = company_code
 except Exception as e:
-    print(f"  UWAGA: Nie znaleziono pola Company Code: {e}")
-
+    print(f"  UWAGA: Company Code: {e}")
 try:
     session2.findById("wnd[0]/usr/radX_OPSEL").select()
     print("  Zaznaczono Open items")
 except Exception as e:
-    print(f"  UWAGA: Nie znaleziono radio Open items: {e}")
-
+    print(f"  UWAGA: Open items: {e}")
 try:
     session2.findById("wnd[0]/usr/ctxtPA_STIDA").text = today_str
-    print(f"  Ustawiono date: {today_str}")
+    print(f"  Data: {today_str}")
 except Exception as e:
-    print(f"  UWAGA: Nie znaleziono pola daty: {e}")
+    print(f"  UWAGA: Data: {e}")
+try:
+    session2.findById("wnd[0]/usr/ctxtPA_VARI").text = "FEBAN2052MR"
+    print("  Layout: FEBAN2052MR")
+except Exception as e:
+    print(f"  UWAGA: Layout: {e}")
 
 print("Wykonuje F8 w FBL3N...")
 session2.findById("wnd[0]").sendVKey(8)
 time.sleep(4)
 
-# Ctrl+F9 = Select Layout (VKey 33)
-print("Otwieram wybor layoutu (Ctrl+F9)...")
-session2.findById("wnd[0]").sendVKey(33)
-time.sleep(2)
+# Eksport: List -> Export -> Spreadsheet
+FBL3N_TEMP_NAME   = f"fbl3n_temp_{timestamp}"
+FBL3N_EXPORT_DIR  = r"C:\Users\mrobak\\"
+FBL3N_EXPORT_XLSX = rf"C:\Users\mrobak\{FBL3N_TEMP_NAME}.xlsx"
+FBL3N_EXPORT_XLS  = rf"C:\Users\mrobak\{FBL3N_TEMP_NAME}.xls"
 
-print("Wybieram layout FEBAN2052MR...")
-layout_found = False
+fbl3n_data        = []
+fbl3n_col_ids     = []
+fbl3n_amounts     = defaultdict(list)
+FBL3N_AMT_COL     = None
+fbl3n_amt_col_idx = None
+fbl3n_row_count   = 0
 
+print("Eksportuje FBL3N (List -> Export -> Spreadsheet)...")
 try:
-    table = session2.findById("wnd[1]/usr/cntlALV_CONTAINER_1/shellcont/shell")
-    for r in range(table.RowCount):
-        try:
-            if str(table.GetCellValue(r, "VARIANT")).strip().upper() == "FEBAN2052MR":
-                table.setCurrentCell(r, "VARIANT")
-                table.doubleClickCurrentCell()
-                layout_found = True
-                print(f"  Layout znaleziony w wierszu {r} (ALV grid)")
-                break
-        except:
-            continue
-except Exception as e:
-    print(f"  Proba 1 (ALV grid) nieudana: {e}")
-
-if not layout_found:
-    try:
-        table = session2.findById("wnd[1]/usr/lsT_VARIANT")
-        for r in range(table.RowCount):
-            try:
-                if str(table.GetCellValue(r, "VARIANT")).strip().upper() == "FEBAN2052MR":
-                    table.setCurrentCell(r, "VARIANT")
-                    table.doubleClickCurrentCell()
-                    layout_found = True
-                    print(f"  Layout znaleziony w wierszu {r} (lista)")
-                    break
-            except:
-                continue
-    except Exception as e:
-        print(f"  Proba 2 (lista) nieudana: {e}")
-
-if not layout_found:
-    try:
-        session2.findById("wnd[1]/usr/txtV-LOW").text = "FEBAN2052MR"
-        session2.findById("wnd[1]").sendVKey(0)
-        time.sleep(0.5)
-        session2.findById("wnd[1]").sendVKey(2)
-        layout_found = True
-        print("  Layout wybrany przez pole filtra")
-    except Exception as e:
-        print(f"  Proba 3 (filtr) nieudana: {e}")
-
-if not layout_found:
-    print("  UWAGA: Nie udalo sie automatycznie wybrac layoutu - wybierz recznie FEBAN2052MR")
-else:
+    session2.findById("wnd[0]/mbar/menu[0]/menu[3]/menu[1]").select()
     time.sleep(2)
 
-# Czytaj dane FBL3N z gridu
-fbl3n_data = []
-fbl3n_col_ids = []
-FBL3N_AMT_COL = None
-fbl3n_amt_col_idx = None
-fbl3n_row_count = 0
-
-print("Czytam dane z gridu FBL3N...")
-try:
-    fbl3n_shell = session2.findById("wnd[0]/shellcont/shell")
-
-    prev = -1
-    while True:
-        current = fbl3n_shell.RowCount
-        if current == prev:
-            break
-        prev = current
+    def try_fill_file_dialog(wnd_id):
         try:
-            fbl3n_shell.firstVisibleRow = current
-        except:
-            break
-        time.sleep(0.3)
-    try:
-        fbl3n_shell.firstVisibleRow = 0
-    except:
-        pass
-    time.sleep(0.5)
-
-    fbl3n_row_count = fbl3n_shell.RowCount
-    print(f"FBL3N: {fbl3n_row_count} wierszy")
-
-    try:
-        for col in fbl3n_shell.ColumnOrder:
-            fbl3n_col_ids.append(str(col))
-    except:
-        pass
-
-    for candidate in ["DMBTR", "WRBTR", "KWBTR", "HSL", "TSL", "AMOUNT"]:
-        if candidate in fbl3n_col_ids:
-            FBL3N_AMT_COL = candidate
-            fbl3n_amt_col_idx = fbl3n_col_ids.index(candidate) + 1
-            print(f"  Kolumna kwot FBL3N: {FBL3N_AMT_COL}")
-            break
-    if not FBL3N_AMT_COL:
-        print("  UWAGA: Nie rozpoznano kolumny kwot w FBL3N. Dostepne kolumny:", fbl3n_col_ids)
-
-    for row in range(fbl3n_row_count):
-        try:
-            fbl3n_shell.setCurrentCell(row, fbl3n_col_ids[0])
-            if row % 10 == 0:
-                time.sleep(0.3)
+            session2.findById(f"{wnd_id}/usr/ctxtDY_PATH").text = FBL3N_EXPORT_DIR
         except:
             pass
-        row_data = {}
-        for col_id in fbl3n_col_ids:
+        try:
+            session2.findById(f"{wnd_id}/usr/ctxtDY_FILENAME").text = FBL3N_TEMP_NAME
+        except:
+            pass
+        try:
+            session2.findById(f"{wnd_id}/tbar[0]/btn[0]").press()
+            return True
+        except:
             try:
-                val = fbl3n_shell.GetCellValue(row, col_id)
+                session2.findById(wnd_id).sendVKey(0)
+                return True
             except:
-                val = ""
-            if col_id == FBL3N_AMT_COL:
-                val = parse_sap_amount(val)
-            row_data[col_id] = val
-        fbl3n_data.append(row_data)
-        print(f"  FBL3N wiersz {row+1}/{fbl3n_row_count}")
+                return False
+
+    export_handled = False
+    for first_wnd in ["wnd[1]", "wnd[2]"]:
+        try:
+            session2.findById(first_wnd)
+        except:
+            continue
+
+        has_filename = False
+        try:
+            session2.findById(f"{first_wnd}/usr/ctxtDY_FILENAME")
+            has_filename = True
+        except:
+            pass
+
+        if has_filename:
+            # Direct file save dialog
+            try_fill_file_dialog(first_wnd)
+            time.sleep(2)
+            export_handled = True
+            break
+        else:
+            # Format confirm popup - press OK, then look for file dialog
+            try:
+                session2.findById(f"{first_wnd}/tbar[0]/btn[0]").press()
+            except:
+                try:
+                    session2.findById(first_wnd).sendVKey(0)
+                except:
+                    pass
+            time.sleep(2)
+            for save_wnd in ["wnd[1]", "wnd[2]"]:
+                try:
+                    session2.findById(f"{save_wnd}/usr/ctxtDY_FILENAME")
+                    try_fill_file_dialog(save_wnd)
+                    time.sleep(2)
+                    export_handled = True
+                    break
+                except:
+                    continue
+            if export_handled:
+                break
+
+    if not export_handled:
+        print("  (Nie udalo sie automatycznie obsluzyc dialogu zapisu)")
 
 except Exception as e:
-    print(f"  BLAD przy czytaniu gridu FBL3N: {e}")
+    print(f"  BLAD eksportu FBL3N: {e}")
+
+# Wczytaj wyeksportowany plik
+fbl3n_export_path = None
+for candidate_path in [FBL3N_EXPORT_XLSX, FBL3N_EXPORT_XLS]:
+    if os.path.exists(candidate_path):
+        fbl3n_export_path = candidate_path
+        break
+
+if fbl3n_export_path:
+    print(f"Wczytuje dane FBL3N z: {fbl3n_export_path}")
+    xl_rd = win32com.client.Dispatch("Excel.Application")
+    xl_rd.Visible = False
+    xl_rd.DisplayAlerts = False
+    try:
+        wb_rd = xl_rd.Workbooks.Open(fbl3n_export_path)
+        ws_rd = wb_rd.Sheets(1)
+        nr_rows = ws_rd.UsedRange.Rows.Count
+        nr_cols = ws_rd.UsedRange.Columns.Count
+
+        fbl3n_col_ids = []
+        for c in range(1, nr_cols + 1):
+            h = ws_rd.Cells(1, c).Value
+            fbl3n_col_ids.append(str(h) if h is not None else f"Col{c}")
+
+        for candidate in ["DMBTR", "WRBTR", "KWBTR", "HSL", "TSL"]:
+            if candidate in fbl3n_col_ids:
+                FBL3N_AMT_COL     = candidate
+                fbl3n_amt_col_idx = fbl3n_col_ids.index(candidate) + 1
+                print(f"  Kolumna kwot FBL3N: {FBL3N_AMT_COL}")
+                break
+        if not FBL3N_AMT_COL:
+            print("  UWAGA: Nie rozpoznano kolumny kwot. Kolumny:", fbl3n_col_ids)
+
+        fbl3n_row_count = nr_rows - 1
+        print(f"  {fbl3n_row_count} wierszy, {nr_cols} kolumn")
+
+        for r in range(2, nr_rows + 1):
+            row_data = {}
+            for c_idx, col_id in enumerate(fbl3n_col_ids, 1):
+                val = ws_rd.Cells(r, c_idx).Value
+                if col_id == FBL3N_AMT_COL and val is not None:
+                    try:
+                        val = round(float(val), 2)
+                    except:
+                        pass
+                row_data[col_id] = val
+            fbl3n_data.append(row_data)
+
+        wb_rd.Close(False)
+        print(f"  Wczytano {len(fbl3n_data)} wierszy")
+    except Exception as e:
+        print(f"  BLAD wczytywania pliku FBL3N: {e}")
+    xl_rd.Quit()
+else:
+    print(f"  UWAGA: Nie znaleziono pliku eksportu FBL3N")
+    print(f"  Oczekiwano: {FBL3N_EXPORT_XLSX}")
 
 # Dodaj arkusz FBL3N do skoroszytu
-print("Dodaje arkusz FBL3N...")
+print("Dodaje arkusz FBL3N do pliku Excel...")
 ws_fbl3n = wb.Sheets.Add(After=wb.Sheets(wb.Sheets.Count))
 ws_fbl3n.Name = "FBL3N"
-
-fbl3n_amounts = defaultdict(list)  # amt -> [excel_rows]
 
 if fbl3n_col_ids:
     for i, col_id in enumerate(fbl3n_col_ids):
         ws_fbl3n.Cells(1, i + 1).Value = col_id
-
     for row_idx, row_data in enumerate(fbl3n_data):
         for col_idx, col_id in enumerate(fbl3n_col_ids):
-            ws_fbl3n.Cells(row_idx + 2, col_idx + 1).Value = row_data[col_id]
+            ws_fbl3n.Cells(row_idx + 2, col_idx + 1).Value = row_data.get(col_id, "")
 
     if fbl3n_amt_col_idx:
         try:
@@ -492,7 +508,6 @@ if fbl3n_col_ids:
         except:
             pass
 
-        # Pary +/- w FBL3N
         print("Szukam par +/- w FBL3N...")
         fbl3n_positives = defaultdict(list)
         fbl3n_negatives = defaultdict(list)
