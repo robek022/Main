@@ -62,71 +62,39 @@ try:
     session2.findById("wnd[0]/mbar/menu[0]/menu[3]/menu[1]").select()
     time.sleep(2)
 
-    def try_fill_file_dialog(wnd_id):
-        try:
-            session2.findById(f"{wnd_id}/usr/ctxtDY_PATH").text = FBL3N_EXPORT_DIR
-        except:
-            pass
-        try:
-            session2.findById(f"{wnd_id}/usr/ctxtDY_FILENAME").text = FBL3N_TEMP_NAME
-        except:
-            pass
-        try:
-            session2.findById(f"{wnd_id}/tbar[0]/btn[0]").press()
-            return True
-        except:
-            try:
-                session2.findById(wnd_id).sendVKey(0)
-                return True
-            except:
-                return False
+    # Krok 1: dialog wyboru formatu (Select Spreadsheet) - XLSX juz zaznaczony, klikamy OK
+    try:
+        fmt_dlg = session2.findById("wnd[1]")
+        print(f"  Dialog formatu: '{fmt_dlg.Text}' - potwierdzam Enter...")
+        fmt_dlg.sendVKey(0)
+        time.sleep(3)
+    except Exception as e:
+        print(f"  (Brak dialogu formatu: {e})")
 
-    export_handled = False
-    for first_wnd in ["wnd[1]", "wnd[2]"]:
+    # Krok 2: sprawdz czy pojawil sie dialog zapisu pliku
+    file_saved = False
+    for save_wnd in ["wnd[1]", "wnd[2]"]:
         try:
-            session2.findById(first_wnd)
+            session2.findById(f"{save_wnd}/usr/ctxtDY_FILENAME")
+            print(f"  Dialog zapisu w {save_wnd} - wpisuje sciezke...")
+            try:
+                session2.findById(f"{save_wnd}/usr/ctxtDY_PATH").text = FBL3N_EXPORT_DIR
+            except:
+                pass
+            session2.findById(f"{save_wnd}/usr/ctxtDY_FILENAME").text = FBL3N_TEMP_NAME
+            try:
+                session2.findById(f"{save_wnd}/tbar[0]/btn[0]").press()
+            except:
+                session2.findById(save_wnd).sendVKey(0)
+            time.sleep(3)
+            file_saved = True
+            print(f"  Zapisano jako: {FBL3N_EXPORT_XLSX}")
+            break
         except:
             continue
 
-        has_filename = False
-        try:
-            session2.findById(f"{first_wnd}/usr/ctxtDY_FILENAME")
-            has_filename = True
-        except:
-            pass
-
-        if has_filename:
-            print(f"  Dialog zapisu w {first_wnd} - wpisuje sciezke...")
-            try_fill_file_dialog(first_wnd)
-            time.sleep(2)
-            export_handled = True
-            break
-        else:
-            print(f"  Dialog potwierdzenia w {first_wnd} - klikam OK...")
-            try:
-                session2.findById(f"{first_wnd}/tbar[0]/btn[0]").press()
-            except:
-                try:
-                    session2.findById(first_wnd).sendVKey(0)
-                except:
-                    pass
-            time.sleep(2)
-            for save_wnd in ["wnd[1]", "wnd[2]"]:
-                try:
-                    session2.findById(f"{save_wnd}/usr/ctxtDY_FILENAME")
-                    print(f"  Dialog zapisu w {save_wnd} - wpisuje sciezke...")
-                    try_fill_file_dialog(save_wnd)
-                    time.sleep(2)
-                    export_handled = True
-                    break
-                except:
-                    continue
-            if export_handled:
-                break
-
-    if not export_handled:
-        print("  UWAGA: Nie udalo sie automatycznie obsluzyc dialogu")
-        print("  Jesli pojawil sie dialog, zapisz plik recznie i kontynuuj")
+    if not file_saved:
+        print("  (Brak dialogu zapisu - SAP mogl otworzyc Excel bezposrednio)")
 
 except Exception as e:
     print(f"  BLAD eksportu: {e}")
