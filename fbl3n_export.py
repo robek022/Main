@@ -81,7 +81,7 @@ try:
                 session2.findById(f"{save_wnd}/usr/ctxtDY_PATH").text = FBL3N_EXPORT_DIR
             except:
                 pass
-            session2.findById(f"{save_wnd}/usr/ctxtDY_FILENAME").text = FBL3N_TEMP_NAME
+            session2.findById(f"{save_wnd}/usr/ctxtDY_FILENAME").text = FBL3N_TEMP_NAME + ".xlsx"
             try:
                 session2.findById(f"{save_wnd}/tbar[0]/btn[0]").press()
             except:
