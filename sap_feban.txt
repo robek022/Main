@@ -507,31 +507,33 @@ wb.Save()
 # === POROWNANIE FEBAN <-> FBL3N ===
 print("\nPorownuje kwoty FEBAN <-> FBL3N...")
 common_amounts = set(feban_amounts.keys()) & set(fbl3n_amounts.keys())
-comment_count = 0
+match_count = 0
+MATCH_TEXT = "Already in the Cashpool account"
 
 for amt in common_amounts:
-    amt_label = f"{amt:,.2f}".replace(",", " ")
     if kwbtr_idx is not None:
         for excel_row in feban_amounts[amt]:
-            cell = ws.Cells(excel_row, kwbtr_idx + 1)
-            try:
-                cell.Comment.Delete()
-            except:
-                pass
-            cell.AddComment(f"Kwota {amt_label} znaleziona rowniez w FBL3N")
-            comment_count += 1
+            cell = ws.Cells(excel_row, 24)
+            existing = cell.Value
+            if existing:
+                cell.Value = str(existing) + " / " + MATCH_TEXT
+            else:
+                cell.Value = MATCH_TEXT
+            cell.Font.Bold = True
+            match_count += 1
     if fbl3n_amt_col_idx:
+        fbl3n_note_col = len(fbl3n_col_ids) + 1
         for excel_row in fbl3n_amounts[amt]:
-            cell = ws_fbl3n.Cells(excel_row, fbl3n_amt_col_idx)
-            try:
-                cell.Comment.Delete()
-            except:
-                pass
-            cell.AddComment(f"Kwota {amt_label} znaleziona rowniez w FEBAN")
-            comment_count += 1
+            cell = ws_fbl3n.Cells(excel_row, fbl3n_note_col)
+            existing = cell.Value
+            if existing:
+                cell.Value = str(existing) + " / Already in FEBAN"
+            else:
+                cell.Value = "Already in FEBAN"
+            cell.Font.Bold = True
 
 wb.Save()
-print(f"Dodano {comment_count} komentarzy dla {len(common_amounts)} pasujacych kwot")
+print(f"Oznaczono {match_count} wierszy FEBAN jako 'Already in the Cashpool account'")
 
 wb.Close()
 excel.Quit()
