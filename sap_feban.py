@@ -204,6 +204,7 @@ except Exception as e:
     print(f"  (Formatowanie Note to Payee pominiete: {e})")
 
 LIGHT_GREEN = 144 + 238 * 256 + 144 * 65536  # RGB(144, 238, 144)
+colored_rows = set()
 
 # Pary +/- KWBTR w FEBAN
 feban_amounts = defaultdict(list)  # amt -> [excel_rows]
@@ -233,6 +234,7 @@ if kwbtr_idx is not None:
         rows_to_color.extend(feban_negatives[amt])
     for excel_row in rows_to_color:
         ws.Rows(excel_row).Interior.Color = LIGHT_GREEN
+        colored_rows.add(excel_row)
     wb.Save()
     print(f"Znaleziono {len(matched)} par, pokolorowano {len(rows_to_color)} wierszy")
 
@@ -245,6 +247,7 @@ for row in range(len(grid_data)):
     val = ws.Cells(excel_row, note_col).Value
     if val is not None and isinstance(val, (int, float)):
         ws.Rows(excel_row).Interior.Color = LIGHT_PINK
+        colored_rows.add(excel_row)
         pink_count += 1
 wb.Save()
 print(f"Pokolorowano {pink_count} wierszy na rozowy (payment run)")
@@ -258,6 +261,7 @@ for row in range(len(grid_data)):
     val = ws.Cells(excel_row, 2).Value
     if val and SEARCH_TEXT in str(val):
         ws.Rows(excel_row).Interior.Color = LIGHT_YELLOW
+        colored_rows.add(excel_row)
         yellow_count += 1
 wb.Save()
 print(f"Pokolorowano {yellow_count} wierszy na zolty")
@@ -277,6 +281,33 @@ for row in range(len(grid_data)):
             cashpool_count += 1
 wb.Save()
 print(f"Oznaczono {cashpool_count} wierszy jako CASHPOOLING")
+
+# Return from vendor - dodatnia kwota bez zadnego koloru
+retur_count = 0
+if kwbtr_idx is not None:
+    print("Szukam dodatnich kwot bez kategorii (Return from vendor?)...")
+    for row in range(len(grid_data)):
+        excel_row = row + 2
+        if excel_row in colored_rows:
+            continue
+        val = ws.Cells(excel_row, kwbtr_idx + 1).Value
+        if val is None:
+            continue
+        try:
+            amt = round(float(val), 2)
+        except:
+            continue
+        if amt > 0:
+            cell = ws.Cells(excel_row, 24)
+            existing = cell.Value
+            if existing == "CASHPOOLING":
+                cell.Value = "CASHPOOLING/Return from vendor?"
+            else:
+                cell.Value = "Return from vendor?"
+            cell.Font.Bold = True
+            retur_count += 1
+wb.Save()
+print(f"Oznaczono {retur_count} wierszy jako Return from vendor?")
 
 # === FBL3N - nowe okno SAP ===
 print("\nOtwieram nowe okno SAP dla FBL3N...")
