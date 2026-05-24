@@ -401,9 +401,6 @@ try:
     if not export_handled:
         print("  (Brak dialogu zapisu - SAP mogl otworzyc Excel bezposrednio)")
 
-    if not export_handled:
-        print("  (Nie udalo sie automatycznie obsluzyc dialogu zapisu)")
-
 except Exception as e:
     print(f"  BLAD eksportu FBL3N: {e}")
 
