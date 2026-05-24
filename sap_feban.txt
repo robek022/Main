@@ -413,11 +413,8 @@ for candidate_path in [FBL3N_EXPORT_XLSX, FBL3N_EXPORT_XLS]:
 
 if fbl3n_export_path:
     print(f"Wczytuje dane FBL3N z: {fbl3n_export_path}")
-    xl_rd = win32com.client.Dispatch("Excel.Application")
-    xl_rd.Visible = False
-    xl_rd.DisplayAlerts = False
     try:
-        wb_rd = xl_rd.Workbooks.Open(fbl3n_export_path)
+        wb_rd = excel.Workbooks.Open(fbl3n_export_path)
         ws_rd = wb_rd.Sheets(1)
         nr_rows = ws_rd.UsedRange.Rows.Count
         nr_cols = ws_rd.UsedRange.Columns.Count
@@ -427,7 +424,8 @@ if fbl3n_export_path:
             h = ws_rd.Cells(1, c).Value
             fbl3n_col_ids.append(str(h) if h is not None else f"Col{c}")
 
-        for candidate in ["DMBTR", "WRBTR", "KWBTR", "HSL", "TSL"]:
+        for candidate in ["DMBTR", "WRBTR", "KWBTR", "HSL", "TSL",
+                          "Amount in Doc. Curr.", "Amount in Local Currency"]:
             if candidate in fbl3n_col_ids:
                 FBL3N_AMT_COL     = candidate
                 fbl3n_amt_col_idx = fbl3n_col_ids.index(candidate) + 1
@@ -455,7 +453,6 @@ if fbl3n_export_path:
         print(f"  Wczytano {len(fbl3n_data)} wierszy")
     except Exception as e:
         print(f"  BLAD wczytywania pliku FBL3N: {e}")
-    xl_rd.Quit()
 else:
     print(f"  UWAGA: Nie znaleziono pliku eksportu FBL3N")
     print(f"  Oczekiwano: {FBL3N_EXPORT_XLSX}")
