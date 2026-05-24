@@ -247,7 +247,6 @@ for row in range(len(grid_data)):
     val = ws.Cells(excel_row, note_col).Value
     if val is not None and isinstance(val, (int, float)):
         ws.Rows(excel_row).Interior.Color = LIGHT_PINK
-        colored_rows.add(excel_row)
         pink_count += 1
 wb.Save()
 print(f"Pokolorowano {pink_count} wierszy na rozowy (payment run)")
