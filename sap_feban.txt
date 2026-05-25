@@ -11,6 +11,9 @@ application = dynamic.Dispatch(SapGuiAuto.GetScriptingEngine)
 connection = application.Children(0)
 session = connection.Children(0)
 
+SAVE_DIR = os.path.join(os.path.expanduser("~"), "Documents")
+os.makedirs(SAVE_DIR, exist_ok=True)
+
 company_code = input("Wpisz numer spolki: ").strip()
 print(f"Polaczono z SAP - spolka {company_code}")
 
@@ -165,7 +168,7 @@ for row in range(row_count):
 
 # === EXCEL - otwieramy i trzymamy otwarty az do konca ===
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-SAVE_PATH = rf"C:\Users\mrobak\feban_raport_{company_code}_{timestamp}.xlsx"
+SAVE_PATH = os.path.join(SAVE_DIR, f"feban_raport_{company_code}_{timestamp}.xlsx")
 
 print("Tworze plik Excel...")
 excel = win32com.client.Dispatch("Excel.Application")
@@ -351,9 +354,9 @@ time.sleep(4)
 
 # Eksport: List -> Export -> Spreadsheet
 FBL3N_TEMP_NAME   = f"fbl3n_temp_{timestamp}"
-FBL3N_EXPORT_DIR  = r"C:\Users\mrobak\\"
-FBL3N_EXPORT_XLSX = rf"C:\Users\mrobak\{FBL3N_TEMP_NAME}.xlsx"
-FBL3N_EXPORT_XLS  = rf"C:\Users\mrobak\{FBL3N_TEMP_NAME}.xls"
+FBL3N_EXPORT_DIR  = SAVE_DIR + "\\"
+FBL3N_EXPORT_XLSX = os.path.join(SAVE_DIR, FBL3N_TEMP_NAME + ".xlsx")
+FBL3N_EXPORT_XLS  = os.path.join(SAVE_DIR, FBL3N_TEMP_NAME + ".xls")
 
 fbl3n_data        = []
 fbl3n_col_ids     = []
