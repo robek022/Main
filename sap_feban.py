@@ -6,10 +6,30 @@ import re
 from datetime import datetime
 from collections import defaultdict
 
-SapGuiAuto = win32com.client.GetObject("SAPGUI")
-application = dynamic.Dispatch(SapGuiAuto.GetScriptingEngine)
-connection = application.Children(0)
-session = connection.Children(0)
+try:
+    SapGuiAuto = win32com.client.GetObject("SAPGUI")
+    application = dynamic.Dispatch(SapGuiAuto.GetScriptingEngine)
+except Exception:
+    print("BLAD: Nie mozna polaczyc sie z SAP GUI.")
+    print("Upewnij sie ze SAP GUI jest otwarty.")
+    input("Nacisnij Enter aby zamknac...")
+    raise SystemExit(1)
+
+try:
+    connection = application.Children(0)
+except Exception:
+    print("BLAD: Brak aktywnego polaczenia z SAP.")
+    print("Zaloguj sie do SAP przed uruchomieniem skryptu.")
+    input("Nacisnij Enter aby zamknac...")
+    raise SystemExit(1)
+
+try:
+    session = connection.Children(0)
+except Exception:
+    print("BLAD: Brak aktywnej sesji SAP.")
+    print("Zaloguj sie do SAP przed uruchomieniem skryptu.")
+    input("Nacisnij Enter aby zamknac...")
+    raise SystemExit(1)
 
 SAVE_DIR = os.path.join(os.path.expanduser("~"), "Documents")
 os.makedirs(SAVE_DIR, exist_ok=True)
