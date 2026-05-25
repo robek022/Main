@@ -363,7 +363,7 @@ try:
 except Exception as e:
     print(f"  UWAGA: Data: {e}")
 try:
-    session2.findById("wnd[0]/usr/ctxtPA_VARI").text = "FEBAN2052MR"
+    session2.findById("wnd[0]/usr/ctxtPA_VARI").text = "/FEBANMR"
     print("  Layout: FEBAN2052MR")
 except Exception as e:
     print(f"  UWAGA: Layout: {e}")
