@@ -253,7 +253,7 @@ try:
         blue_rows = set()
         MAX_COMBOS = 300_000
 
-        for size in range(3, 6):
+        for size in range(3, 4):
             available = [(amt, r) for amt, r in unmatched if r not in blue_rows]
             if len(available) < size:
                 break
