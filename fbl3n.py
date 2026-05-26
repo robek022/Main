@@ -157,8 +157,8 @@ try:
     # Wykryj kolumne kwot
     amt_col_idx = None
     AMT_COL = None
-    for candidate in ["DMBTR", "WRBTR", "KWBTR", "HSL", "TSL",
-                      "Amount in Doc. Curr.", "Amount in Local Currency"]:
+    for candidate in ["Amount in Local Currency", "DMBTR", "HSL",
+                      "Amount in Doc. Curr.", "WRBTR", "KWBTR", "TSL"]:
         if candidate in col_ids:
             AMT_COL     = candidate
             amt_col_idx = col_ids.index(candidate) + 1
