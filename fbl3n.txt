@@ -2,6 +2,7 @@ import win32com.client
 from win32com.client import dynamic
 import time
 import os
+import math
 from datetime import datetime
 from collections import defaultdict
 from itertools import combinations
@@ -215,11 +216,18 @@ try:
         LIGHT_GREEN = 144 + 238 * 256 + 144 * 65536
         LIGHT_BLUE  = 173 + 216 * 256 + 230 * 65536
 
+        # Kolumna z numerem grupy
+        group_col = nr_cols + 1
+        ws.Cells(1, group_col).Value = "Clearing Group"
+
         green_rows = set()
+        group_num = 1
         for amt in matched:
             for r in positives[amt] + negatives[amt]:
                 ws.Rows(r).Interior.Color = LIGHT_GREEN
+                ws.Cells(r, group_col).Value = group_num
                 green_rows.add(r)
+            group_num += 1
 
         wb.Save()
         print(f"  Znaleziono {len(matched)} par, pokolorowano {len(green_rows)} wierszy na zielono")
@@ -243,17 +251,18 @@ try:
         print(f"  Niezmatchowanych wierszy do sprawdzenia: {len(unmatched)}")
 
         blue_rows = set()
-        group_count = 0
+        MAX_COMBOS = 300_000
 
         for size in range(3, 6):
             available = [(amt, r) for amt, r in unmatched if r not in blue_rows]
             if len(available) < size:
                 break
-            if len(available) > 60 and size == 5:
-                print(f"  (Pomijam grupy po 5 - za duzo elementow: {len(available)}, mogloby trwac za dlugo)")
-                break
+            n_combos = math.comb(len(available), size)
+            if n_combos > MAX_COMBOS:
+                print(f"  (Pomijam grupy po {size}: {n_combos:,} kombinacji - za duzo)")
+                continue
 
-            print(f"  Sprawdzam grupy po {size} elementow ({len(available)} dostepnych)...")
+            print(f"  Sprawdzam grupy po {size} ({n_combos:,} kombinacji)...")
             for combo in combinations(range(len(available)), size):
                 if any(available[i][1] in blue_rows for i in combo):
                     continue
@@ -261,14 +270,16 @@ try:
                     for i in combo:
                         r = available[i][1]
                         ws.Rows(r).Interior.Color = LIGHT_BLUE
+                        ws.Cells(r, group_col).Value = group_num
                         blue_rows.add(r)
-                    group_count += 1
+                    group_num += 1
 
         wb.Save()
-        print(f"  Znaleziono {group_count} dodatkowych grup = 0, pokolorowano {len(blue_rows)} wierszy na niebiesko")
-
+        blue_groups = group_num - 1 - len(matched)
+        print(f"  Znaleziono {blue_groups} grup = 0, pokolorowano {len(blue_rows)} wierszy na niebiesko")
         remaining = row_count - len(green_rows) - len(blue_rows)
         print(f"  Bez dopasowania: {remaining} wierszy (biale)")
+        print(f"  Lacznie grup clearowania: {group_num - 1}")
 
     wb.Save()
 
