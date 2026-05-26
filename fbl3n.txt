@@ -32,10 +32,11 @@ except Exception:
     raise SystemExit(1)
 
 # === PARAMETRY ===
-account     = input("Wpisz numer konta G/L: ").strip()
+account      = input("Wpisz numer konta G/L: ").strip()
 company_code = input("Wpisz numer spolki: ").strip()
-today_str   = datetime.now().strftime("%d.%m.%Y")
-timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S")
+date_from    = input("Posting date OD (dd.mm.rrrr): ").strip()
+date_to      = input("Posting date DO (dd.mm.rrrr): ").strip()
+timestamp    = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 SAVE_DIR = os.path.join(os.path.expanduser("~"), "Documents")
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -46,7 +47,7 @@ EXPORT_XLSX = os.path.join(SAVE_DIR, TEMP_NAME + ".xlsx")
 EXPORT_XLS  = os.path.join(SAVE_DIR, TEMP_NAME + ".xls")
 SAVE_PATH   = os.path.join(SAVE_DIR, f"fbl3n_raport_{account}_{company_code}_{timestamp}.xlsx")
 
-print(f"\nKonto: {account} | Spolka: {company_code} | Data: {today_str}")
+print(f"\nKonto: {account} | Spolka: {company_code} | Posting date: {date_from} - {date_to}")
 
 # === FBL3N ===
 print("Nawiguje do FBL3N...")
@@ -64,15 +65,16 @@ try:
 except Exception as e:
     print(f"  UWAGA: Company Code: {e}")
 try:
-    session.findById("wnd[0]/usr/radX_OPSEL").select()
-    print("  Open items zaznaczone")
+    session.findById("wnd[0]/usr/radX_AISEL").select()
+    print("  All items zaznaczone")
 except Exception as e:
-    print(f"  UWAGA: Open items: {e}")
+    print(f"  UWAGA: All items: {e}")
 try:
-    session.findById("wnd[0]/usr/ctxtPA_STIDA").text = today_str
-    print(f"  Data: {today_str}")
+    session.findById("wnd[0]/usr/ctxtSO_BUDAT-LOW").text = date_from
+    session.findById("wnd[0]/usr/ctxtSO_BUDAT-HIGH").text = date_to
+    print(f"  Posting date: {date_from} - {date_to}")
 except Exception as e:
-    print(f"  UWAGA: Data: {e}")
+    print(f"  UWAGA: Posting date: {e}")
 try:
     session.findById("wnd[0]/usr/ctxtPA_VARI").text = "/FEBANMR"
     print("  Layout: /FEBANMR")
