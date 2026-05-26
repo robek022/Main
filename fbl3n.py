@@ -251,28 +251,34 @@ try:
         print(f"  Niezmatchowanych wierszy do sprawdzenia: {len(unmatched)}")
 
         blue_rows = set()
-        MAX_COMBOS = 300_000
 
-        for size in range(3, 4):
-            available = [(amt, r) for amt, r in unmatched if r not in blue_rows]
-            if len(available) < size:
-                break
-            n_combos = math.comb(len(available), size)
-            if n_combos > MAX_COMBOS:
-                print(f"  (Pomijam grupy po {size}: {n_combos:,} kombinacji - za duzo)")
+        # Szukaj trojek sumujacych sie do 0 algorytmem O(n^2) z hashmapa
+        int_to_rows = defaultdict(list)
+        for amt, r in unmatched:
+            int_to_rows[round(amt * 100)].append(r)
+
+        n = len(unmatched)
+        print(f"  Sprawdzam trojki ({n} wierszy)...")
+        for i in range(n):
+            ai_int = round(unmatched[i][0] * 100)
+            ri = unmatched[i][1]
+            if ri in blue_rows:
                 continue
-
-            print(f"  Sprawdzam grupy po {size} ({n_combos:,} kombinacji)...")
-            for combo in combinations(range(len(available)), size):
-                if any(available[i][1] in blue_rows for i in combo):
+            for j in range(i + 1, n):
+                aj_int = round(unmatched[j][0] * 100)
+                rj = unmatched[j][1]
+                if rj in blue_rows:
                     continue
-                if abs(sum(available[i][0] for i in combo)) < 0.01:
-                    for i in combo:
-                        r = available[i][1]
-                        ws.Rows(r).Interior.Color = LIGHT_BLUE
-                        ws.Cells(r, group_col).Value = group_num
-                        blue_rows.add(r)
-                    group_num += 1
+                needed = -(ai_int + aj_int)
+                if needed in int_to_rows:
+                    for rk in int_to_rows[needed]:
+                        if rk not in blue_rows and rk != ri and rk != rj:
+                            for r in [ri, rj, rk]:
+                                ws.Rows(r).Interior.Color = LIGHT_BLUE
+                                ws.Cells(r, group_col).Value = group_num
+                                blue_rows.add(r)
+                            group_num += 1
+                            break
 
         wb.Save()
         blue_groups = group_num - 1 - len(matched)
