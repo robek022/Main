@@ -4,6 +4,7 @@ import time
 import os
 from datetime import datetime
 from collections import defaultdict
+from itertools import combinations
 
 # === POLACZENIE Z SAP ===
 try:
@@ -212,18 +213,62 @@ try:
 
         matched = set(positives.keys()) & set(negatives.keys())
         LIGHT_GREEN = 144 + 238 * 256 + 144 * 65536
+        LIGHT_BLUE  = 173 + 216 * 256 + 230 * 65536
 
-        colored = 0
+        green_rows = set()
         for amt in matched:
             for r in positives[amt] + negatives[amt]:
                 ws.Rows(r).Interior.Color = LIGHT_GREEN
-                colored += 1
+                green_rows.add(r)
 
         wb.Save()
-        print(f"  Znaleziono {len(matched)} par, pokolorowano {colored} wierszy na zielono")
+        print(f"  Znaleziono {len(matched)} par, pokolorowano {len(green_rows)} wierszy na zielono")
 
-        # Wiersze bez pary - brak koloru (zostaja biale)
-        print(f"  Wiersze bez pary: {row_count - colored} (biale)")
+        # === GRUPY SUMUJACE SIE DO 0 (pozostale wiersze) ===
+        print("  Szukam grup sumujacych sie do 0 wsrod pozostalych wierszy...")
+        unmatched = []
+        for r in range(2, nr_rows + 1):
+            if r in green_rows:
+                continue
+            val = ws.Cells(r, amt_col_idx).Value
+            if val is None:
+                continue
+            try:
+                amt = round(float(val), 2)
+                if amt != 0:
+                    unmatched.append((amt, r))
+            except:
+                continue
+
+        print(f"  Niezmatchowanych wierszy do sprawdzenia: {len(unmatched)}")
+
+        blue_rows = set()
+        group_count = 0
+
+        for size in range(3, 6):
+            available = [(amt, r) for amt, r in unmatched if r not in blue_rows]
+            if len(available) < size:
+                break
+            if len(available) > 60 and size == 5:
+                print(f"  (Pomijam grupy po 5 - za duzo elementow: {len(available)}, mogloby trwac za dlugo)")
+                break
+
+            print(f"  Sprawdzam grupy po {size} elementow ({len(available)} dostepnych)...")
+            for combo in combinations(range(len(available)), size):
+                if any(available[i][1] in blue_rows for i in combo):
+                    continue
+                if abs(sum(available[i][0] for i in combo)) < 0.01:
+                    for i in combo:
+                        r = available[i][1]
+                        ws.Rows(r).Interior.Color = LIGHT_BLUE
+                        blue_rows.add(r)
+                    group_count += 1
+
+        wb.Save()
+        print(f"  Znaleziono {group_count} dodatkowych grup = 0, pokolorowano {len(blue_rows)} wierszy na niebiesko")
+
+        remaining = row_count - len(green_rows) - len(blue_rows)
+        print(f"  Bez dopasowania: {remaining} wierszy (biale)")
 
     wb.Save()
 
