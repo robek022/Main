@@ -142,8 +142,11 @@ if not export_path:
 
 print(f"\nWczytuje dane z: {export_path}")
 excel = win32com.client.Dispatch("Excel.Application")
-excel.Visible = False
-excel.DisplayAlerts = False
+try:
+    excel.Visible = False
+    excel.DisplayAlerts = False
+except:
+    pass
 
 try:
     wb_src = excel.Workbooks.Open(export_path)
@@ -292,7 +295,10 @@ except Exception as e:
     input("Nacisnij Enter aby zamknac...")
     raise SystemExit(1)
 
-excel.Visible = True
+try:
+    excel.Visible = True
+except:
+    pass
 wb.Activate()
 
 print(f"\nGotowe! Zapisano: {SAVE_PATH}")
