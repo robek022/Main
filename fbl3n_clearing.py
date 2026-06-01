@@ -114,11 +114,14 @@ try:
     group_num  = 1
 
     for amt in matched:
-        for r in positives[amt] + negatives[amt]:
-            ws.Rows(r).Interior.Color = LIGHT_GREEN
-            ws.Cells(r, group_col).Value = group_num
-            green_rows.add(r)
-        group_num += 1
+        for pos_r, neg_r in zip(positives[amt], negatives[amt]):
+            ws.Rows(pos_r).Interior.Color = LIGHT_GREEN
+            ws.Cells(pos_r, group_col).Value = group_num
+            ws.Rows(neg_r).Interior.Color = LIGHT_GREEN
+            ws.Cells(neg_r, group_col).Value = group_num
+            green_rows.add(pos_r)
+            green_rows.add(neg_r)
+            group_num += 1
 
     wb.Save()
     print(f"Znaleziono {len(matched)} par, pokolorowano {len(green_rows)} wierszy na zielono")
