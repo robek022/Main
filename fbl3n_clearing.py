@@ -218,8 +218,56 @@ try:
 
     wb.Save()
     orange_groups = len(orange_rows) // 4
-    remaining     = row_count - len(green_rows) - len(blue_rows) - len(orange_rows)
     print(f"Znaleziono {orange_groups} czworek = 0, pokolorowano {len(orange_rows)} wierszy na pomaranczowo")
+
+    # === PIATKI SUMUJACE SIE DO 0 ===
+    print("\nSzukam piatek sumujacych sie do 0...")
+    remaining5 = [(amt, r) for amt, r in unmatched if r not in blue_rows and r not in orange_rows]
+    n5 = len(remaining5)
+    print(f"Wierszy do sprawdzenia: {n5}")
+
+    LIGHT_PURPLE = 200 + 162 * 256 + 200 * 65536
+    q5_rows = set()
+
+    if n5 > 300:
+        print(f"  (Pomijam piatki: {n5} wierszy - za duzo, max 300)")
+    else:
+        pair_sums5 = defaultdict(list)
+        for i in range(n5):
+            for j in range(i + 1, n5):
+                s = round(remaining5[i][0] * 100) + round(remaining5[j][0] * 100)
+                pair_sums5[s].append((i, j))
+
+        for i in range(n5):
+            ri = remaining5[i][1]
+            if ri in q5_rows:
+                continue
+            for j in range(i + 1, n5):
+                rj = remaining5[j][1]
+                if rj in q5_rows:
+                    continue
+                for k in range(j + 1, n5):
+                    rk = remaining5[k][1]
+                    if rk in q5_rows:
+                        continue
+                    target = -(round(remaining5[i][0]*100) + round(remaining5[j][0]*100) + round(remaining5[k][0]*100))
+                    if target in pair_sums5:
+                        for l, m in pair_sums5[target]:
+                            if l > k:
+                                rl = remaining5[l][1]
+                                rm = remaining5[m][1]
+                                if rl not in q5_rows and rm not in q5_rows:
+                                    for r in [ri, rj, rk, rl, rm]:
+                                        ws.Rows(r).Interior.Color = LIGHT_PURPLE
+                                        ws.Cells(r, group_col).Value = group_num
+                                        q5_rows.add(r)
+                                    group_num += 1
+                                    break
+
+    wb.Save()
+    q5_groups = len(q5_rows) // 5
+    remaining  = row_count - len(green_rows) - len(blue_rows) - len(orange_rows) - len(q5_rows)
+    print(f"Znaleziono {q5_groups} piatek = 0, pokolorowano {len(q5_rows)} wierszy na fioletowo")
     print(f"Bez dopasowania: {remaining} wierszy (biale)")
     print(f"Lacznie grup clearowania: {group_num - 1}")
 
