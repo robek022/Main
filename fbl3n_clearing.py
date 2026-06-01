@@ -66,16 +66,12 @@ try:
     row_count = nr_rows - 1
     print(f"{row_count} wierszy, {nr_cols} kolumn")
 
-    # Skopiuj dane do nowego skoroszytu
+    # Skopiuj dane do nowego skoroszytu (bulk - jeden COM call)
+    all_data = ws_src.Range(ws_src.Cells(1, 1), ws_src.Cells(nr_rows, nr_cols)).Value
     wb = excel.Workbooks.Add()
     ws = wb.Sheets(1)
     ws.Name = "FBL3N"
-
-    for c in range(1, nr_cols + 1):
-        ws.Cells(1, c).Value = ws_src.Cells(1, c).Value
-    for r in range(2, nr_rows + 1):
-        for c in range(1, nr_cols + 1):
-            ws.Cells(r, c).Value = ws_src.Cells(r, c).Value
+    ws.Range(ws.Cells(1, 1), ws.Cells(nr_rows, nr_cols)).Value = all_data
 
     wb_src.Close(False)
     wb.SaveAs(SAVE_PATH)
@@ -93,13 +89,16 @@ try:
     group_col = nr_cols + 1
     ws.Cells(1, group_col).Value = "Clearing Group"
 
+    # Wczytaj cala kolumne kwot jednym wywolaniem
+    amt_col_data = ws.Range(ws.Cells(1, amt_col_idx), ws.Cells(nr_rows, amt_col_idx)).Value
+
     # === PARY +/- ===
     print("\nSzukam par +/- do clearowania...")
     positives = defaultdict(list)
     negatives = defaultdict(list)
 
     for r in range(2, nr_rows + 1):
-        val = ws.Cells(r, amt_col_idx).Value
+        val = amt_col_data[r - 1][0] if amt_col_data else None
         if val is None:
             continue
         try:
@@ -131,7 +130,7 @@ try:
     for r in range(2, nr_rows + 1):
         if r in green_rows:
             continue
-        val = ws.Cells(r, amt_col_idx).Value
+        val = amt_col_data[r - 1][0] if amt_col_data else None
         if val is None:
             continue
         try:
