@@ -172,9 +172,54 @@ try:
                         break
 
     wb.Save()
-    blue_groups = group_num - 1 - len(matched)
-    remaining   = row_count - len(green_rows) - len(blue_rows)
+    blue_groups = group_num - 1 - (len(green_rows) // 2)
     print(f"Znaleziono {blue_groups} trojek = 0, pokolorowano {len(blue_rows)} wierszy na niebiesko")
+
+    # === CZWORKI SUMUJACE SIE DO 0 ===
+    print("\nSzukam czworek sumujacych sie do 0...")
+    remaining4 = [(amt, r) for amt, r in unmatched if r not in blue_rows]
+    n4 = len(remaining4)
+    print(f"Wierszy do sprawdzenia: {n4}")
+
+    LIGHT_ORANGE = 255 + 165 * 256 + 0 * 65536
+    orange_rows  = set()
+
+    if n4 > 2000:
+        print(f"  (Pomijam czworki: {n4} wierszy - za duzo, max 2000)")
+    else:
+        # Slownik sum par: suma_int -> lista (idx_i, idx_j)
+        pair_sums = defaultdict(list)
+        for i in range(n4):
+            for j in range(i + 1, n4):
+                s = round(remaining4[i][0] * 100) + round(remaining4[j][0] * 100)
+                pair_sums[s].append((i, j))
+
+        for i in range(n4):
+            ri = remaining4[i][1]
+            if ri in orange_rows:
+                continue
+            for j in range(i + 1, n4):
+                rj = remaining4[j][1]
+                if rj in orange_rows:
+                    continue
+                target = -(round(remaining4[i][0] * 100) + round(remaining4[j][0] * 100))
+                if target in pair_sums:
+                    for k, l in pair_sums[target]:
+                        if k > j:
+                            rk = remaining4[k][1]
+                            rl = remaining4[l][1]
+                            if rk not in orange_rows and rl not in orange_rows:
+                                for r in [ri, rj, rk, rl]:
+                                    ws.Rows(r).Interior.Color = LIGHT_ORANGE
+                                    ws.Cells(r, group_col).Value = group_num
+                                    orange_rows.add(r)
+                                group_num += 1
+                                break
+
+    wb.Save()
+    orange_groups = len(orange_rows) // 4
+    remaining     = row_count - len(green_rows) - len(blue_rows) - len(orange_rows)
+    print(f"Znaleziono {orange_groups} czworek = 0, pokolorowano {len(orange_rows)} wierszy na pomaranczowo")
     print(f"Bez dopasowania: {remaining} wierszy (biale)")
     print(f"Lacznie grup clearowania: {group_num - 1}")
 
