@@ -66,12 +66,11 @@ try:
     row_count = nr_rows - 1
     print(f"{row_count} wierszy, {nr_cols} kolumn")
 
-    # Skopiuj dane do nowego skoroszytu (bulk - jeden COM call)
-    all_data = ws_src.Range(ws_src.Cells(1, 1), ws_src.Cells(nr_rows, nr_cols)).Value
-    wb = excel.Workbooks.Add()
+    # Skopiuj arkusz bezposrednio w Excelu (szybkie, bez przesylania przez Python)
+    ws_src.Copy()
+    wb = excel.ActiveWorkbook
     ws = wb.Sheets(1)
     ws.Name = "FBL3N"
-    ws.Range(ws.Cells(1, 1), ws.Cells(nr_rows, nr_cols)).Value = all_data
 
     wb_src.Close(False)
     wb.SaveAs(SAVE_PATH)
